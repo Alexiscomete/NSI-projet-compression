@@ -5,13 +5,14 @@
 def main():
     ENCODER_FICHIER = 1
     DECODER_FICHIER = 2
-    while(enco_deco<1 or enco_deco>2):
-        print("1: encoder")
-        print("2: decoder")
-        enco_deco = int(input("Faites votre choix: "))
+    enco_deco = ENCODER_FICHIER + DECODER_FICHIER
+    while not (enco_deco in [ENCODER_FICHIER, DECODER_FICHIER]):
+        print(ENCODER_FICHIER, ": encoder")
+        print(DECODER_FICHIER, ": decoder")
+        enco_deco = int(input("Faites votre choix : "))
 
-    fichier_chemin = input("Quel fichier voulez-vous coder ou décoder?: ")
-    fichier_sortie = input("Quel est le nom du fichier compressé/décompressé?: ")
+    fichier_chemin = input("Quel fichier voulez-vous coder ou décoder ?: ")
+    fichier_sortie = input("Quel est le nom du fichier compressé/décompressé ?: ")
     if enco_deco == ENCODER_FICHIER:
         contenu_fichier = load_file(fichier_chemin)
         table, texte_comp = code(contenu_fichier)
