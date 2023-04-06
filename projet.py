@@ -245,6 +245,13 @@ def code(texte):
         arbre)  # Initialise la variable 'table' à un dictionnaire des codes binaires des caractères de 'texte'
     return table, encoder_txt(table, texte)
 
+
+if __name__ == "__main__":
+    print("Testing code function ...")
+    assert code('') is None
+    assert code('texte') == ({'e': '0', 'x': '10', 't': '11'}, '11010110')
+
+
 def decoder_txt(tab, texte):
     """
     Cette fonction prend en paramètre un dictionnaire 'tab' et une chaîne
@@ -435,10 +442,6 @@ def load_file_decode(path):
             data += int_to_bin_padding(int.from_bytes(fichier.read(1), "little"), 8)
     return table_retour, data
 
-if __name__ == "__main__":
-    print("Testing code function ...")
-    assert code('') is None
-    assert code('texte') == ({'e': '0', 'x': '10', 't': '11'}, '11010110')
     
 if __name__ == "__main__":
     # Fonction main
