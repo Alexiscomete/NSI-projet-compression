@@ -357,7 +357,7 @@ def save_file_encode(path, table, encodeds):
         # table:
         for el in k:
             f.write(len(table[el]).to_bytes(1, "little"))
-            f.write(bink[el].to_bytes(len(table[el]//8+1), "little"))
+            f.write(bink[el].to_bytes(len(table[el])//8+1, "little"))
             f.write(el.encode("cp437"))
 
         # chaine: Convertit un entier en bytes. Le nombre de bytes est calculé de façon à diviser en groupes de 8,
