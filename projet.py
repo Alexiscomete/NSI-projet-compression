@@ -37,7 +37,7 @@ def compte(texte):
             dic[caractere] = 1  # Sinon, elle crée une nouvelle clé dont la valeur est initialisée à 1
     return dic
 
-
+#faudra bouger ça, ça fais planter le programme je crois
 if __name__ == "__main__":
     assert compte('') == {}
     assert compte('texte') == {'t': 2, 'e': 2, 'x': 1}
@@ -227,7 +227,6 @@ def encoder_txt(tab, texte):
         txt += tab[c]  # Ajoute dans 'txt' la valeur associée à la clé 'c' dans 'tab'
     return txt
 
-
 if __name__ == "__main__":
     print("Testing encoder_txt ...")
     assert encoder_txt({'e': '0', 'x': '10', 't': '11'}, 'texte') == '11010110'
@@ -357,7 +356,7 @@ def save_file_encode(path, table, encodeds):
         # table:
         for el in k:
             f.write(len(table[el]).to_bytes(1, "little"))
-            f.write(bink[el].to_bytes(1, "little"))
+            f.write(bink[el].to_bytes(len(table[el])//8+1, "little"))
             f.write(el.encode("ascii"))
 
         # chaine: Convertit un entier en bytes. Le nombre de bytes est calculé de façon à diviser en groupes de 8,
@@ -438,8 +437,8 @@ def load_file_decode(path):
 
         for _ in range(taille_table // 3):  # boucle pour récupérer notre table, et en faire un dictionnaire
             taille_cle = int.from_bytes(fichier.read(1), "little")
-            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(1), "little"), taille_cle)
-            lettre = fichier.read(1).decode("ascii")
+            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(taille_cle//8+1), "little"),taille_cle)
+            lettre = fichier.read(1).decode("cp437")
 
             table_retour[lettre] = cle_binaire
 
