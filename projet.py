@@ -196,16 +196,11 @@ def save_file(path, s):
     sauvegarde une string (format ascii) dans un fichier, grâce au chemin fourni.
     paramètre path: chemin d'accès du fichier
     paramètre s: string à sauvegarder
-    return: None
+    :return: None
     """
-    for i in range(len(s)//8):
-        binstring = ""
-        for j in range(8):
-            binstring += s[i*8+j]
     file_bytes = s.encode("ascii")
-    with open(path, "wb") as f:
-        f.write(file_bytes)
-    return
+    with open(path, "wb") as fichier:
+        fichier.write(file_bytes)
 
 
 def load_file(path):
