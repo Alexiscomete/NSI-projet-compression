@@ -43,7 +43,7 @@ def compte(texte):
     et les valeurs, le nombre d'occurrences de chaque caractère.
     """
     dic = {}
-    for caractere in texte:  # Parcours chaque caractères du texte
+    for caractere in texte:  # Parcours chaque caractère du texte
         if caractere in dic:  # Condition qui vérifie si le caractère est déjà présent dans le dictionnaire
             dic[caractere] += 1  # Si oui, la fonction incrémente de 1 la valeur associée à cette clé
         else:
@@ -157,6 +157,17 @@ class Arbre:
         return arbre.somme_poids() == self.somme_poids()
 
 
+if __name__ == "__main__":
+    print("Testing Arbre ...")
+    assert Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3)) \
+           == Arbre(Arbre(None, None, "b", 3), Arbre(None, None, "a", 3))
+    assert not Arbre(Arbre(None, None, "a", 4), Arbre(None, None, "b", 4)) \
+               == Arbre(Arbre(None, None, "b", 54), Arbre(None, None, "a", 3))
+    assert not Arbre(Arbre(None, None, "a", 4), Arbre(None, None, "b", 4)) \
+               == Arbre(Arbre(None, None, "b", 3), Arbre(None, None, "a", 3))
+    # Aucun autre test nécessaire : toutes les autres fonctions ne sont utilisées que pour le Debug
+
+
 def creer_arbre(dictionnaire_lettres):
     """
     Permet de créer l'arbre de compréssion d'après l'algorithme
@@ -197,16 +208,10 @@ def creer_arbre(dictionnaire_lettres):
     return arbres[0]
 
 
-def creer_table(arbre):
-    """Cette fonction prend en paramètre un arbre.
-    Elle permet de créer un dictionnaire associant un caractère à une suite de nombre binaire.
-    Elle renvoie un dictionnaire.
-    """
-    # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
-    dico1 = creer_table_auxiliaire(arbre.gauche, "0")
-    # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
-    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))
-    return dico1  # renvoie le dictionnaire dico1
+if __name__ == "__main__":
+    print("Testing creer_arbre ...")
+    assert creer_arbre({}) is None
+    assert creer_arbre({"a": 3, "b": 3}) == Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))
 
 
 def creer_table_auxiliaire(arbre, cle):
@@ -230,6 +235,23 @@ def creer_table_auxiliaire(arbre, cle):
         return dico1
 
 
+def creer_table(arbre):
+    """Cette fonction prend en paramètre un arbre.
+    Elle permet de créer un dictionnaire associant un caractère à une suite de nombre binaire.
+    Elle renvoie un dictionnaire lettre -> code.
+    """
+    # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
+    dico1 = creer_table_auxiliaire(arbre.gauche, "0")
+    # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
+    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))
+    return dico1  # renvoie le dictionnaire dico1
+
+
+if __name__ == "__main__":
+    print("Testing creer_table and creer_table_auxiliaire ...")
+    assert creer_table(Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))) == {"a": "0", "b": "1"}
+
+
 def encoder_txt(tab, texte):
     """
     Cette fonction prend en paramètre un dictionnaire 'tab' et une chaîne
@@ -237,28 +259,31 @@ def encoder_txt(tab, texte):
     """
     txt = ''
     for c in texte:  # Parcours chaque caractère du texte
-        txt += tab[c]  # Ajoute dans 'txt' la valeur associée à la clé 'c' dans 'tab'
+        if c in tab:
+            txt += tab[c]  # Ajoute dans 'txt' la valeur associée à la clé 'c' dans 'tab'
     return txt
 
 
 if __name__ == "__main__":
     print("Testing encoder_txt ...")
     assert encoder_txt({'e': '0', 'x': '10', 't': '11'}, 'texte') == '11010110'
+    assert encoder_txt({'t': '11'}, 'texte') == '1111'
 
 
 def code(texte):
     """
     Cette fonction prend en paramètre une chaîne de caractères 'texte'
     et renvoie un dictionnaire 'table' où les clés sont les caractères de la chaîne
-    et les valeurs, le code binaire de chaque caractère, et le texte encodé.
+    et les valeurs, le code binaire de chaque caractère et le texte encodé.
     """
     if texte == '':  # Cas du texte vide
         return None
-    dic = compte(texte)  # Initialise la variable 'dic' à un dictionnaire d’occurrence des caractères de 'texte'
-    arbre = creer_arbre(
-        dic)  # Initialise la variable 'arbre' à un arbre binaire des occurrences des caractères de 'texte'
-    table = creer_table(
-        arbre)  # Initialise la variable 'table' à un dictionnaire des codes binaires des caractères de 'texte'
+    # Initialise la variable 'dic' à un dictionnaire d’occurrence des caractères de 'texte'
+    dic = compte(texte)
+    # Initialise la variable 'arbre' à un arbre binaire des occurrences des caractères de 'texte'
+    arbre = creer_arbre(dic)
+    # Initialise la variable 'table' à un dictionnaire des codes binaires des caractères de 'texte'
+    table = creer_table(arbre)
     return table, encoder_txt(table, texte)
 
 
@@ -322,6 +347,12 @@ def bin_to_int(s):
     for i in range(len(s)):
         val += 2 ** i if s[len(s) - i - 1] == "1" else 0
     return val
+
+
+if __name__ == "__main__":
+    print("Testing bin_to_int ...")
+    assert bin_to_int("10") == 2
+    assert bin_to_int("101") == 5
 
 
 def save_file_encode(path, table, encodeds):
@@ -401,6 +432,12 @@ def int_to_bin(n):
     return s
 
 
+if __name__ == "__main__":
+    print("Testing int_to_bin ...")
+    assert "10" == int_to_bin(2)
+    assert "101" == int_to_bin(5)
+
+
 def int_to_bin_padding(n, size):
     """
     convertis d'un int vers une chaine de caractère binaire, ajoute des 0 à la fin jusqu'à atteindre
@@ -419,6 +456,12 @@ def int_to_bin_padding(n, size):
     for i in range(size):
         s = "0" + s
     return s
+
+
+if __name__ == "__main__":
+    print("Testing int_to_bin_padding ...")
+    assert "010" == int_to_bin_padding(2, 3)
+    assert "101" == int_to_bin_padding(5, 3)
 
 
 def load_file_decode(path):
@@ -468,11 +511,5 @@ def load_file_decode(path):
 
 
 if __name__ == "__main__":
-    # Fonction main
-
+    print("Testing main ...")
     assert main() is None
-
-    # Fonction creer_arbre
-
-    assert creer_arbre({}) is None
-    assert creer_arbre({"a": 3, "b": 3}) == Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))
