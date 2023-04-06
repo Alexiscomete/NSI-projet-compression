@@ -3,6 +3,12 @@
 # ======================================== #
 
 def main():
+    """
+    Fonction principale du code, elle contrôle les autres
+
+    :return: Rien du tout
+    """
+
     ENCODER_FICHIER = 1
     DECODER_FICHIER = 2
     enco_deco = ENCODER_FICHIER + DECODER_FICHIER
@@ -12,11 +18,18 @@ def main():
         enco_deco = int(input("Faites votre choix : "))
 
     fichier_chemin = input("Quel fichier voulez-vous coder ou décoder ?: ")
-    fichier_sortie = input("Quel est le nom du fichier compressé/décompressé ?: ")
+    print("Quel est le nom du fichier compressé/décompressé ?")
+    fichier_sortie = input("Répondez auto pour le nom automatique: ")
+    if fichier_sortie == "auto":
+        fichier_sortie = fichier_chemin.split(".")[0] + "_output" + (".hcs" if enco_deco == ENCODER_FICHIER else ".txt")
+
     if enco_deco == ENCODER_FICHIER:
         contenu_fichier = load_file(fichier_chemin)
+        print("Taille de départ :", len(contenu_fichier), "octets")
         table, texte_comp = code(contenu_fichier)
-        save_file_encode(fichier_sortie, table, texte_comp)
+        taille = save_file_encode(fichier_sortie, table, texte_comp)
+        print("Taille arrivée :", taille, "octets")
+        print("Compression de", int(((len(contenu_fichier) - taille) / len(contenu_fichier)) * 100), "%")
     elif enco_deco == DECODER_FICHIER:
         table, contenu_compressed = load_file_decode(fichier_chemin)
         texte_decomp = decoder_txt(table, contenu_compressed)
@@ -46,7 +59,7 @@ if __name__ == "__main__":
 class Arbre:
     """
     Code d'un arbre binaire spécialisé dans la **compression** de fichiers.
-    Une feuille représente une lettre et le chemin jusqu'à la racine son code compréssé.
+    Une feuille représente une lettre et le chemin jusqu'à la racine son code compressé.
     Si ce n'est pas une feuille, la node ne DOIT pas contenir une lettre
     """
 
@@ -293,7 +306,7 @@ def load_file(path):
     """
     crèe un string (format ascii) en ouvrant un fichier, grâce au chemin fourni.
     paramètre path: chemin d'accès du fichier
-    return: string représentant l'entièretée du fichier.
+    return: string représentant l'entièreté du fichier.
     """
     with open(path, "rb") as fichier:
         file_string = fichier.read().decode("cp437")
@@ -330,7 +343,8 @@ def save_file_encode(path, table, encodeds):
     path: chemin d'accès vers le fichier dans lequel nous souhaitons sauvegarder notre compression
     table: notre table, qui encode nos différents caractères en chaines de bits
     encodeds: string contenant des 1 et des 0, donc les bits une fois notre texte encodé
-    return: None
+
+    :return: nombre d'octets enregistrés
     """
     k = table.keys()
     bink = {}
@@ -348,25 +362,29 @@ def save_file_encode(path, table, encodeds):
             binstring += encodeds[i * 8 + j]
         bytearr.append(bin_to_int(binstring))
 
+    somme_octets = 0
+
     with open(path, "wb+") as f:
         # header:
+        somme_octets += 3
         f.write(b"HCS")
-        f.write((len(bink) * 3).to_bytes(4, "little"))
-        f.write(len(encodeds).to_bytes(4, "little"))
+        somme_octets += f.write((len(bink) * 3).to_bytes(4, "little"))
+        somme_octets += f.write(len(encodeds).to_bytes(4, "little"))
 
         # table:
         for el in k:
-            f.write(len(table[el]).to_bytes(1, "little"))
-            f.write(bink[el].to_bytes(len(table[el])//8+1, "little"))
-            f.write(el.encode("cp437"))
+            somme_octets += f.write(len(table[el]).to_bytes(1, "little"))
+            somme_octets += f.write(bink[el].to_bytes(len(table[el]) // 8 + 1, "little"))
+            somme_octets += f.write(el.encode("cp437"))
 
         # chaine: Convertit un entier en bytes. Le nombre de bytes est calculé de façon à diviser en groupes de 8,
         # avec un groupe minimum. Rappel : le // est prioritaire.
         for i in range(len(encodeds) // 8 + 1):
-            f.write(bytearr[i].to_bytes(
+            somme_octets += f.write(bytearr[i].to_bytes(
                 1,
                 "little")
             )
+    return somme_octets
 
 
 def int_to_bin(n):
@@ -438,7 +456,7 @@ def load_file_decode(path):
 
         for _ in range(taille_table // 3):  # boucle pour récupérer notre table, et en faire un dictionnaire
             taille_cle = int.from_bytes(fichier.read(1), "little")
-            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(taille_cle//8+1), "little"), taille_cle)
+            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(taille_cle // 8 + 1), "little"), taille_cle)
             lettre = fichier.read(1).decode("cp437")
 
             table_retour[lettre] = cle_binaire
