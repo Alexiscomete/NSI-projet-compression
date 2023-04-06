@@ -72,9 +72,11 @@ class Arbre:
         Permet d'initialiser l'arbre. Un arbre peut-être noeud d'un autre arbre.
 
         :param gauche: noeud gauche de l'arbre, si c'est une lettre vide
-        :param droite: noeud droit de l'arbre, vide si c'est une lettre
+        :param droit: noeud droit de l'arbre,
+        vide si c'est une lettre
         :param lettre: Indique si c'est une lettre, vide sinon
-        :param poid: le poids du noeud dans l'algorithme de création de l'arbre, vide si ce n'est pas une feuille car il sera automatiquement rempli avec le poids de ses fils
+        :param poid: le poids du noeud dans l'algorithme de création de l'arbre, vide si ce n'est pas une feuille, car
+        il sera automatiquement rempli avec le poids de ses fils
         """
         self.gauche = gauche
         self.droit = droit
@@ -88,7 +90,8 @@ class Arbre:
 
     def afficher(self):
         """
-        Permet d'afficher l'arbre pendant le debug sous forme d'un arbre, racine en haut, et en minimisant la place occupée
+        Permet d'afficher l'arbre pendant le debug sous forme d'un arbre, racine en haut, et en minimisant la place
+        occupée
         """
         # Lignes à remplir en auxiliaire
         strings = {}
@@ -99,29 +102,29 @@ class Arbre:
 
     def auxiliaire_afficher(self, etage_noeud, decalage, liste_etages):
         """
-        Fonction auxiliaire récursive de afficher, avec un parcours infixe
+        Fonction auxiliaire récursive d'afficher, avec un parcours infixe
 
-        :param etage_noeud: étage actuel du noeud, 1 de + que son père, et position dans liste_etage du string à modifier
-        :param decalage: permet décaler sur la droite l'affichage du nom du noeud, ainsi permet d'aligner tout
-        :param liste_etages: dictionnaire des strings donnée récursivement à modifier
+        :param etage_noeud: étage actuel du nœud, 1 de + que son père et position dans liste_etage du string à modifier
+        :param decalage: permet décaler sur la droite l'affichage du nom du nœud, ainsi permet d'aligner tout
+        :param liste_etages: dictionnaire des strings donné récursivement à modifier
         """
 
         # Permet de gérer le cas de None
         lettre = (self.lettre if self.lettre else "")
 
-        # Début de l'infixe : on print le noeud de gauche et on décale
+        # Début de l'infixe : on print le nœud de gauche et on décale
         if self.gauche is not None:
             decalage = self.gauche.auxiliaire_afficher(etage_noeud + 1, decalage, liste_etages)
 
         # Permet de s'ajouter à la liste tout en gardant les nœuds à gauche et en prenant en compte le décalage
         liste_etages[etage_noeud] = \
-            ( # Décalage
+            (  # Décalage
                 (
                         liste_etages[etage_noeud] + " " * (decalage - len(liste_etages[etage_noeud]))
                 ) if (
                         etage_noeud in liste_etages
                 ) else " " * decalage
-            ) + str(self.poid) + lettre # Affichage
+            ) + str(self.poid) + lettre  # Affichage
         decalage += len(str(self.poid) + lettre)
 
         # Même chose pour droit
@@ -130,18 +133,48 @@ class Arbre:
 
         return decalage
 
+    def somme_poids(self):
+        somme = self.poid
+        if self.droit:
+            somme += self.droit.somme_poids()
+        if self.gauche:
+            somme += self.gauche.somme_poids()
+        return somme
+
+    def lettres(self, liste):
+        if self.lettre:
+            liste.append(self.lettre)
+        else:
+            if self.droit:
+                self.droit.lettres(liste)
+            if self.gauche:
+                self.gauche.lettres(liste)
+
+    def __eq__(self, arbre):
+        liste1 = []
+        liste2 = []
+        self.lettres(liste1)
+        arbre.lettres(liste2)
+        for element in liste1:
+            if element not in liste2:
+                return False
+        return arbre.somme_poids() == self.somme_poids()
+
 
 def creer_arbre(dictionnaire_lettres):
     """
     Permet de créer l'arbre de compréssion d'après l'algorithme
 
-    :param dictionnaire_lettres: lettre -> nombre d'occurences
+    :param dictionnaire_lettres: lettre → nombre d'occurences
     """
 
-    # Initialisation : chaque lettre devient un noeud de poid occurence
+    # Initialisation : chaque lettre devient un noeud de poid "occurences"
     arbres = []
     for item in dictionnaire_lettres.items():
         arbres.append(Arbre(None, None, lettre=item[0], poid=item[1]))
+
+    if len(arbres) == 0:
+        return None
 
     # Fonction pour comparer
     def poid(arbre):
@@ -169,12 +202,14 @@ def creer_arbre(dictionnaire_lettres):
 
 
 def creer_table(arbre):
-    '''Cette fonction prend en paramètre un arbre.
+    """Cette fonction prend en paramètre un arbre.
     Elle permet de créer un dictionnaire associant un caractère à une suite de nombre binaire.
     Elle renvoie un dictionnaire.
-    '''
-    dico1 = creer_table_auxiliaire(arbre.gauche, "0")  # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
-    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))  # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
+    """
+    # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
+    dico1 = creer_table_auxiliaire(arbre.gauche, "0")
+    # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
+    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))
     return dico1  # renvoie le dictionnaire dico1
 
 
@@ -212,10 +247,10 @@ if __name__ == "__main__":
 
 
 def decoder_txt(tab, texte):
-    '''
+    """
     Cette fonction prend en paramètre un dictionnaire 'tab' et une chaîne
     de nombres binaire 'texte' et renvoie le texte décodé.
-    '''
+    """
     txt = ''
     num = ''
     for c in texte: #Parcours chaque caractère du texte
@@ -236,6 +271,7 @@ def save_file(path, s):
     sauvegarde une string (format ascii) dans un fichier, grâce au chemin fourni.
     paramètre path: chemin d'accès du fichier
     paramètre s: string à sauvegarder
+
     :return: None
     """
     file_bytes = s.encode("ascii")
@@ -249,14 +285,15 @@ def load_file(path):
     paramètre path: chemin d'accès du fichier
     return: string représentant l'entièretée du fichier.
     """
-    with open(path, "rb") as f:
-        str = f.read().decode("ascii")
-    return str
+    with open(path, "rb") as fichier:
+        file_string = fichier.read().decode("ascii")
+    return file_string
 
 
 def bin_to_int(s):
     """
-    Permet de convertir une chaine caractère (de taille infini) en un seul et unique grand nombre qui pourra être séparé en bytes ensuite. Python permet de stocker des nombres infinis
+    Permet de convertir une chaine caractère (de taille infini) en un seul et unique grand nombre qui pourra être séparé
+    en bytes ensuite. Python permet de stocker des nombres infinis
     """
     val = 0
     for i in range(len(s)):
@@ -344,13 +381,14 @@ def int_to_bin_padding(n, size):
     return: chaine de caractère composée de "0" et de "1"
     """
     s = ""
-    while n>0 or s=="":
-        s = str(n%2) + s
-        n = n//2
+    while n > 0 or s == "":
+        s = str(n % 2) + s
+        n = n // 2
         size-=1
     for i in range(size):
         s = "0" + s
     return s
+
 
 def load_file_decode(path):
     """
@@ -369,22 +407,23 @@ def load_file_decode(path):
             (optionel) padding                              (équivalente à (7-(taille chaine compressée))%8 bytes)
     paramètres:
     path: chemin d'accès vers le fichier depuis lequel nous souhaitons récupérer nos données compressées
-    return:
-    (bink: table de codage, pour décompresser les données
-    data: nos données compressées) ou None si le fichier n'est pas valide (aucune vérification n'est faite mise à part l'en-tête du fichier, du moins pour l'instant)
+
+    :return: (bink: table de codage, pour décompresser les données data: nos données compressées) ou None si le
+    fichier n'est pas valide (aucune vérification n'est faite mise à part l'en-tête du fichier, du moins pour
+    l'instant)
     """
 
-    table_retour = {} #ce sera notre table
+    table_retour = {}  # ce sera notre table
 
     with open(path, "rb") as fichier:
         # read permet de lire n octet.s
-        if fichier.read(3)!=b"HCS": #verifier que le fichier soit bien à notre format
+        if fichier.read(3) != b"HCS":  # verifier que le fichier soit bien à notre format
             print("Le fichier n'est pas au format HCS")
-            return None #il faudra détecter que la fonction ne retourne pas None.
+            return None # il faudra détecter que la fonction ne retourne pas None.
         taille_table = int.from_bytes(fichier.read(4),"little") 
         taille_donnees = int.from_bytes(fichier.read(4),"little") 
 
-        for _ in range(taille_table//3): #boucle pour récupérer notre table, et en faire un dictionnaire
+        for _ in range(taille_table//3): # boucle pour récupérer notre table, et en faire un dictionnaire
             taille_cle = int.from_bytes(fichier.read(1), "little")
             cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(1), "little"),taille_cle)
             lettre = fichier.read(1).decode("ascii")
@@ -398,4 +437,11 @@ def load_file_decode(path):
 
 
 if __name__ == "__main__":
-    main()
+    # Fonction main
+
+    assert main() is None
+
+    # Fonction creer_arbre
+
+    assert creer_arbre({}) is None
+    assert creer_arbre({"a": 3, "b": 3}) == Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))
