@@ -3,13 +3,24 @@
 # ======================================== #
 
 def main():
-    enco_deco = input("Voulez vous encoder ou decoder votre texte?")
-    if enco_deco == "encoder":
-        encode = input("Quel texte voulez vous encoder?")
-        return code(encode)
-    elif enco_deco == "decoder":
-        decode_input = input("Quel texte voulez vous decoder?")
-        #return decode(decode_input)
+    ENCODER_FICHIER = 1
+    DECODER_FICHIER = 2
+    enco_deco = ENCODER_FICHIER + DECODER_FICHIER
+    while not (enco_deco in [ENCODER_FICHIER, DECODER_FICHIER]):
+        print(ENCODER_FICHIER, ": encoder")
+        print(DECODER_FICHIER, ": decoder")
+        enco_deco = int(input("Faites votre choix : "))
+
+    fichier_chemin = input("Quel fichier voulez-vous coder ou décoder ?: ")
+    fichier_sortie = input("Quel est le nom du fichier compressé/décompressé ?: ")
+    if enco_deco == ENCODER_FICHIER:
+        contenu_fichier = load_file(fichier_chemin)
+        table, texte_comp = code(contenu_fichier)
+        save_file_encode(fichier_sortie, table, texte_comp)
+    elif enco_deco == DECODER_FICHIER:
+        table, contenu_compressed = load_file_decode(fichier_chemin)
+        texte_decomp = decoder_txt(table,contenu_compressed)
+        save_file(fichier_sortie, texte_decomp)
 
 
 def code(texte):
@@ -264,9 +275,8 @@ def save_file(path, s):
     :return: None
     """
     file_bytes = s.encode("ascii")
-    with open(path, "wb") as f:
-        f.write(file_bytes)
-    return
+    with open(path, "wb") as fichier:
+        fichier.write(file_bytes)
 
 
 def load_file(path):
@@ -290,7 +300,6 @@ def bin_to_int(s):
         val += 2 ** i if s[len(s) - i - 1] == "1" else 0
     return val
 
-
 def save_file_encode(path, table, encodeds):
     """
     sauvegarde la table et la chaine encodée dans le fichier spécifié
@@ -310,15 +319,25 @@ def save_file_encode(path, table, encodeds):
     path: chemin d'accès vers le fichier dans lequel nous souhaitons sauvegarder notre compression
     table: notre table, qui encode nos différents caractères en chaines de bits
     encodeds: string contenant des 1 et des 0, donc les bits une fois notre texte encodé
-
     return: None
     """
     k = table.keys()
     bink = {}
     for el in k:
-        bink[el] = bin_to_int(el)
+        bink[el] = bin_to_int(table[el])
 
-    encodedval = bin_to_int(encodeds)
+    bytearr = []
+    for i in range(len(encodeds)//8+1):
+        binstring = ""
+        for j in range(8):
+            if i==len(encodeds)//8 and j>=len(encodeds)%8:
+                for _ in range(8-len(encodeds)%8):
+                    binstring+="0"
+                break
+            binstring+=encodeds[i*8+j]
+        bytearr.append(bin_to_int(binstring))
+    
+
     with open(path, "wb+") as f:
         # header:
         f.write(b"HCS")
@@ -327,34 +346,47 @@ def save_file_encode(path, table, encodeds):
 
         # table:
         for el in k:
-            print(len(el).to_bytes(1, "little"))
-            print(bink[el].to_bytes(1, "little"))
-            print(table[el].encode("ascii"))
-            f.write(len(el).to_bytes(1, "little"))
+            f.write(len(table[el]).to_bytes(1, "little"))
             f.write(bink[el].to_bytes(1, "little"))
-            f.write(table[el].encode("ascii"))
+            f.write(el.encode("ascii"))
 
         # chaine: Convertit un entier en bytes. Le nombre de bytes est calculé de façon à diviser en groupes de 8,
         # avec un groupe minimum. Rappel : le // est prioritaire.
-        f.write(encodedval.to_bytes(
-            len(encodeds) // 8 + 1,
-            "little")
-        )
+        for i in range(len(encodeds)//8+1):
+            f.write(bytearr[i].to_bytes(
+                1,
+                "little")
+            )
 
 
 def int_to_bin(n):
     """
     convertis d'un int vers une chaine de caractère binaire
-
     paramètre:
     n: notre int à convertir
+    return: chaine de caractère composée de "0" et de "1"
+    """
+    s = ""
+    while n>0 or s=="":
+        s = str(n%2) + s
+        n = n//2
+    return s
 
+def int_to_bin_padding(n, size):
+    """
+    convertis d'un int vers une chaine de caractère binaire, ajoute des 0 à la fin jusqu'à atteindre la taille binaire demandée
+    paramètre:
+    n: notre int à convertir
+    size: la taille finale de notre chaine
     return: chaine de caractère composée de "0" et de "1"
     """
     s = ""
     while n > 0 or s == "":
         s = str(n % 2) + s
         n = n // 2
+        size-=1
+    for i in range(size):
+        s = "0" + s
     return s
 
 
@@ -387,24 +419,24 @@ def load_file_decode(path):
         # read permet de lire n octet.s
         if fichier.read(3) != b"HCS":  # verifier que le fichier soit bien à notre format
             print("Le fichier n'est pas au format HCS")
-            return None  # il faudra détecter que la fonction ne retourne pas None.
-        taille_cle = int.from_bytes(fichier.read(4), "little")
-        taille_donnes = int.from_bytes(fichier.read(4), "little")
+            return None # il faudra détecter que la fonction ne retourne pas None.
+        taille_table = int.from_bytes(fichier.read(4),"little") 
+        taille_donnees = int.from_bytes(fichier.read(4),"little") 
 
-        for _ in range(taille_cle // 3):  # boucle pour récupérer notre table, et en faire un dictionnaire
-            taille_cle_lettre = int.from_bytes(fichier.read(1), "little")
-            # le & ici représente un opérateur "et" logique, cela sert à construire un masque de bits, pour récupérer
-            # seulement la partie qui nous intéresse dans l'octet.
-            cle_lettre = int_to_bin(int.from_bytes(fichier.read(1), "little") & 2 ** taille_cle_lettre - 1)
-            table_retour[cle_lettre] = fichier.read(1).decode("ascii")
-        data = int_to_bin(int.from_bytes(fichier.read(taille_donnes // 8 + 1), "little") & 2 ** taille_donnes - 1)
-    return table_retour, data
+        for _ in range(taille_table//3): # boucle pour récupérer notre table, et en faire un dictionnaire
+            taille_cle = int.from_bytes(fichier.read(1), "little")
+            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(1), "little"),taille_cle)
+            lettre = fichier.read(1).decode("ascii")
+            
+            table_retour[lettre] = cle_binaire
+        
+        data = ""
+        for _ in range(taille_donnees//8+1):
+            data += int_to_bin_padding(int.from_bytes(fichier.read(1), "little"),8)
+    return table_retour,data
 
 
 if __name__ == "__main__":
-    print(creer_table(creer_arbre(compte("Je manges une pomme rouge et verte"))))
-    print()
-
     # Fonction main
 
     assert main() is None
