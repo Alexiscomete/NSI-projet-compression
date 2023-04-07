@@ -28,8 +28,9 @@ def main():
         print("Taille de départ :", len(contenu_fichier), "octets")
         table, texte_comp = code(contenu_fichier)
         taille = save_file_encode(fichier_sortie, table, texte_comp)
+        pourcentage = pourcentage_compression(taille, len(contenu_fichier))
         print("Taille arrivée :", taille, "octets")
-        print("Compression de", int(((len(contenu_fichier) - taille) / len(contenu_fichier)) * 100), "%")
+        print("Compression de", pourcentage, "%")
     elif enco_deco == DECODER_FICHIER:
         table, contenu_compressed = load_file_decode(fichier_chemin)
         texte_decomp = decoder_txt(table, contenu_compressed)
