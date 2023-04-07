@@ -37,6 +37,24 @@ def main():
         save_file(fichier_sortie, texte_decomp)
 
 
+def pourcentage_compression(taille_finale,taille_initiale):
+    """
+    prends en paramètre la taille du fichier compressé, et celle du fichier non-compressé, et retourne un float qui contiens le pourcentage de compression entre les deux.
+    taille_finale: taille du fichier compressé
+    taille_initiale: taille du fichier d'origine
+
+    :return: taux de compression en pourcents
+    """
+    return ((taille_initiale - taille_finale) / taille_initiale) * 100
+
+
+if __name__ == "__main__":
+    print("Testing pourcentage_compression ...")
+    assert pourcentage_compression(20,100) == 80
+    assert pourcentage_compression(50,100) == 50
+    assert pourcentage_compression(1,100) == 99
+
+
 def compte(texte):
     """
     Cette fonction prend en paramètre une chaîne de caractères 'texte'
@@ -67,7 +85,7 @@ class Arbre:
     def __init__(self, gauche, droit, lettre=None, poid=0):
         """
         Permet d'initialiser l'arbre. Un arbre peut-être noeud d'un autre arbre.
-        
+
         :param gauche: noeud gauche de l'arbre, si c'est une lettre vide
         :param droit: noeud droit de l'arbre,
         vide si c'est une lettre
@@ -100,7 +118,7 @@ class Arbre:
     def auxiliaire_afficher(self, etage_noeud, decalage, liste_etages):
         """
         Fonction auxiliaire récursive d'afficher, avec un parcours infixe
-        
+
         :param etage_noeud: étage actuel du nœud, 1 de + que son père et position dans liste_etage du string à modifier
         :param decalage: permet décaler sur la droite l'affichage du nom du nœud, ainsi permet d'aligner tout
         :param liste_etages: dictionnaire des strings donné récursivement à modifier
@@ -172,7 +190,7 @@ if __name__ == "__main__":
 def creer_arbre(dictionnaire_lettres):
     """
     Permet de créer l'arbre de compréssion d'après l'algorithme
-    
+
     :param dictionnaire_lettres: lettre → nombre d'occurences
     """
 
@@ -320,7 +338,7 @@ def save_file(path, s):
     sauvegarde une string (format ascii) dans un fichier, grâce au chemin fourni.
     paramètre path: chemin d'accès du fichier
     paramètre s: string à sauvegarder
-    
+
     :return: None
     """
     file_bytes = s.encode("cp437")
@@ -446,7 +464,7 @@ def int_to_bin_padding(n, size):
     paramètre:
     n: notre int à convertir
     size: la taille finale de notre chaine
-    
+
     :return: chaine de caractère composée de "0" et de "1"
     """
     s = ""
@@ -469,7 +487,7 @@ def load_file_decode(path):
     """
     charge la table et la chaine encodée depuis un fichier spécifié
     format:
-        header: 
+        header:
             identifieur "HCS" (Huffman Compressing System)  (3 octets)
             taille table (octets)                           (4 octets)
             taille chaine compressée (bits)                 (4 octets)
@@ -482,7 +500,7 @@ def load_file_decode(path):
             (optionel) padding                              (équivalente à (7-(taille chaine compressée))%8 bytes)
     paramètres:
     path: chemin d'accès vers le fichier depuis lequel nous souhaitons récupérer nos données compressées
-    
+
     :return: (bink: table de codage, pour décompresser les données data: nos données compressées) ou None si le
     fichier n'est pas valide (aucune vérification n'est faite mise à part l'en-tête du fichier, du moins pour
     l'instant)
@@ -510,21 +528,7 @@ def load_file_decode(path):
             data += int_to_bin_padding(int.from_bytes(fichier.read(1), "little"), 8)
     return table_retour, data
 
-def pourcentage_compression(taille_finale,taille_initiale):
-    """
-    prends en paramètre la taille du fichier compressé, et celle du fichier non-compressé, et retourne un float qui contiens le pourcentage de compression entre les deux.
-    taille_finale: taille du fichier compressé
-    taille_initiale: taille du fichier d'origine
-    
-    :return: taux de compression en pourcents
-    """
-    return ((taille_initiale - taille_finale) / taille_initiale) * 100
 
-if __name__ == "__main__":
-    print("Testing pourcentage_compression ...")
-    assert pourcentage_compression(20,100) == 80
-    assert pourcentage_compression(50,100) == 50
-    assert pourcentage_compression(1,100) == 99
 if __name__ == "__main__":
     print("Testing main ...")
     assert main() is None
