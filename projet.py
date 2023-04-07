@@ -3,6 +3,12 @@
 # ======================================== #
 
 def main():
+    """
+    Fonction principale du code, elle contrôle les autres
+
+    :return: Rien du tout
+    """
+
     ENCODER_FICHIER = 1
     DECODER_FICHIER = 2
     enco_deco = ENCODER_FICHIER + DECODER_FICHIER
@@ -12,11 +18,19 @@ def main():
         enco_deco = int(input("Faites votre choix : "))
 
     fichier_chemin = input("Quel fichier voulez-vous coder ou décoder ?: ")
-    fichier_sortie = input("Quel est le nom du fichier compressé/décompressé ?: ")
+    print("Quel est le nom du fichier compressé/décompressé ?")
+    fichier_sortie = input("Répondez auto pour le nom automatique: ")
+    if fichier_sortie == "auto":
+        fichier_sortie = fichier_chemin.split(".")[0] + "_output" + (".hcs" if enco_deco == ENCODER_FICHIER else ".txt")
+
     if enco_deco == ENCODER_FICHIER:
         contenu_fichier = load_file(fichier_chemin)
+        print("Taille de départ :", len(contenu_fichier), "octets")
         table, texte_comp = code(contenu_fichier)
-        save_file_encode(fichier_sortie, table, texte_comp)
+        taille = save_file_encode(fichier_sortie, table, texte_comp)
+        pourcentage = pourcentage_compression(taille, len(contenu_fichier))
+        print("Taille arrivée :", taille, "octets")
+        print("Compression de", pourcentage, "%")
     elif enco_deco == DECODER_FICHIER:
         table, contenu_compressed = load_file_decode(fichier_chemin)
         texte_decomp = decoder_txt(table, contenu_compressed)
@@ -30,7 +44,7 @@ def compte(texte):
     et les valeurs, le nombre d'occurrences de chaque caractère.
     """
     dic = {}
-    for caractere in texte:  # Parcours chaque caractères du texte
+    for caractere in texte:  # Parcours chaque caractère du texte
         if caractere in dic:  # Condition qui vérifie si le caractère est déjà présent dans le dictionnaire
             dic[caractere] += 1  # Si oui, la fonction incrémente de 1 la valeur associée à cette clé
         else:
@@ -46,7 +60,7 @@ if __name__ == "__main__":
 class Arbre:
     """
     Code d'un arbre binaire spécialisé dans la **compression** de fichiers.
-    Une feuille représente une lettre et le chemin jusqu'à la racine son code compréssé.
+    Une feuille représente une lettre et le chemin jusqu'à la racine son code compressé.
     Si ce n'est pas une feuille, la node ne DOIT pas contenir une lettre
     """
 
@@ -144,6 +158,17 @@ class Arbre:
         return arbre.somme_poids() == self.somme_poids()
 
 
+if __name__ == "__main__":
+    print("Testing Arbre ...")
+    assert Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3)) \
+           == Arbre(Arbre(None, None, "b", 3), Arbre(None, None, "a", 3))
+    assert not Arbre(Arbre(None, None, "a", 4), Arbre(None, None, "b", 4)) \
+               == Arbre(Arbre(None, None, "b", 54), Arbre(None, None, "a", 3))
+    assert not Arbre(Arbre(None, None, "a", 4), Arbre(None, None, "b", 4)) \
+               == Arbre(Arbre(None, None, "b", 3), Arbre(None, None, "a", 3))
+    # Aucun autre test nécessaire : toutes les autres fonctions ne sont utilisées que pour le Debug
+
+
 def creer_arbre(dictionnaire_lettres):
     """
     Permet de créer l'arbre de compréssion d'après l'algorithme
@@ -184,16 +209,10 @@ def creer_arbre(dictionnaire_lettres):
     return arbres[0]
 
 
-def creer_table(arbre):
-    """Cette fonction prend en paramètre un arbre.
-    Elle permet de créer un dictionnaire associant un caractère à une suite de nombre binaire.
-    Elle renvoie un dictionnaire.
-    """
-    # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
-    dico1 = creer_table_auxiliaire(arbre.gauche, "0")
-    # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
-    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))
-    return dico1  # renvoie le dictionnaire dico1
+if __name__ == "__main__":
+    print("Testing creer_arbre ...")
+    assert creer_arbre({}) is None
+    assert creer_arbre({"a": 3, "b": 3}) == Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))
 
 
 def creer_table_auxiliaire(arbre, cle):
@@ -217,6 +236,23 @@ def creer_table_auxiliaire(arbre, cle):
         return dico1
 
 
+def creer_table(arbre):
+    """Cette fonction prend en paramètre un arbre.
+    Elle permet de créer un dictionnaire associant un caractère à une suite de nombre binaire.
+    Elle renvoie un dictionnaire lettre -> code.
+    """
+    # initialise dico1 en appelant la fonction creer_table_auxiliaire avec en paramètre arbre.gauche et "0"
+    dico1 = creer_table_auxiliaire(arbre.gauche, "0")
+    # modifie dico1 en appelant creer_table_auxiliaire avec en paramètre arbre.droit et "1"
+    dico1.update(creer_table_auxiliaire(arbre.droit, "1"))
+    return dico1  # renvoie le dictionnaire dico1
+
+
+if __name__ == "__main__":
+    print("Testing creer_table and creer_table_auxiliaire ...")
+    assert creer_table(Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))) == {"a": "0", "b": "1"}
+
+
 def encoder_txt(tab, texte):
     """
     Cette fonction prend en paramètre un dictionnaire 'tab' et une chaîne
@@ -224,28 +260,31 @@ def encoder_txt(tab, texte):
     """
     txt = ''
     for c in texte:  # Parcours chaque caractère du texte
-        txt += tab[c]  # Ajoute dans 'txt' la valeur associée à la clé 'c' dans 'tab'
+        if c in tab:
+            txt += tab[c]  # Ajoute dans 'txt' la valeur associée à la clé 'c' dans 'tab'
     return txt
 
 
 if __name__ == "__main__":
     print("Testing encoder_txt ...")
     assert encoder_txt({'e': '0', 'x': '10', 't': '11'}, 'texte') == '11010110'
+    assert encoder_txt({'t': '11'}, 'texte') == '1111'
 
 
 def code(texte):
     """
     Cette fonction prend en paramètre une chaîne de caractères 'texte'
     et renvoie un dictionnaire 'table' où les clés sont les caractères de la chaîne
-    et les valeurs, le code binaire de chaque caractère, et le texte encodé.
+    et les valeurs, le code binaire de chaque caractère et le texte encodé.
     """
     if texte == '':  # Cas du texte vide
         return None
-    dic = compte(texte)  # Initialise la variable 'dic' à un dictionnaire d’occurrence des caractères de 'texte'
-    arbre = creer_arbre(
-        dic)  # Initialise la variable 'arbre' à un arbre binaire des occurrences des caractères de 'texte'
-    table = creer_table(
-        arbre)  # Initialise la variable 'table' à un dictionnaire des codes binaires des caractères de 'texte'
+    # Initialise la variable 'dic' à un dictionnaire d’occurrence des caractères de 'texte'
+    dic = compte(texte)
+    # Initialise la variable 'arbre' à un arbre binaire des occurrences des caractères de 'texte'
+    arbre = creer_arbre(dic)
+    # Initialise la variable 'table' à un dictionnaire des codes binaires des caractères de 'texte'
+    table = creer_table(arbre)
     return table, encoder_txt(table, texte)
 
 
@@ -293,7 +332,7 @@ def load_file(path):
     """
     crèe un string (format ascii) en ouvrant un fichier, grâce au chemin fourni.
     paramètre path: chemin d'accès du fichier
-    return: string représentant l'entièretée du fichier.
+    return: string représentant l'entièreté du fichier.
     """
     with open(path, "rb") as fichier:
         file_string = fichier.read().decode("cp437")
@@ -309,6 +348,12 @@ def bin_to_int(s):
     for i in range(len(s)):
         val += 2 ** i if s[len(s) - i - 1] == "1" else 0
     return val
+
+
+if __name__ == "__main__":
+    print("Testing bin_to_int ...")
+    assert bin_to_int("10") == 2
+    assert bin_to_int("101") == 5
 
 
 def save_file_encode(path, table, encodeds):
@@ -330,7 +375,8 @@ def save_file_encode(path, table, encodeds):
     path: chemin d'accès vers le fichier dans lequel nous souhaitons sauvegarder notre compression
     table: notre table, qui encode nos différents caractères en chaines de bits
     encodeds: string contenant des 1 et des 0, donc les bits une fois notre texte encodé
-    return: None
+
+    :return: nombre d'octets enregistrés
     """
     k = table.keys()
     bink = {}
@@ -348,25 +394,29 @@ def save_file_encode(path, table, encodeds):
             binstring += encodeds[i * 8 + j]
         bytearr.append(bin_to_int(binstring))
 
+    somme_octets = 0
+
     with open(path, "wb+") as f:
         # header:
+        somme_octets += 3
         f.write(b"HCS")
-        f.write((len(bink) * 3).to_bytes(4, "little"))
-        f.write(len(encodeds).to_bytes(4, "little"))
+        somme_octets += f.write((len(bink) * 3).to_bytes(4, "little"))
+        somme_octets += f.write(len(encodeds).to_bytes(4, "little"))
 
         # table:
         for el in k:
-            f.write(len(table[el]).to_bytes(1, "little"))
-            f.write(bink[el].to_bytes(len(table[el])//8+1, "little"))
-            f.write(el.encode("cp437"))
+            somme_octets += f.write(len(table[el]).to_bytes(1, "little"))
+            somme_octets += f.write(bink[el].to_bytes(len(table[el]) // 8 + 1, "little"))
+            somme_octets += f.write(el.encode("cp437"))
 
         # chaine: Convertit un entier en bytes. Le nombre de bytes est calculé de façon à diviser en groupes de 8,
         # avec un groupe minimum. Rappel : le // est prioritaire.
         for i in range(len(encodeds) // 8 + 1):
-            f.write(bytearr[i].to_bytes(
+            somme_octets += f.write(bytearr[i].to_bytes(
                 1,
                 "little")
             )
+    return somme_octets
 
 
 def int_to_bin(n):
@@ -381,6 +431,12 @@ def int_to_bin(n):
         s = str(n % 2) + s
         n = n // 2
     return s
+
+
+if __name__ == "__main__":
+    print("Testing int_to_bin ...")
+    assert "10" == int_to_bin(2)
+    assert "101" == int_to_bin(5)
 
 
 def int_to_bin_padding(n, size):
@@ -401,6 +457,12 @@ def int_to_bin_padding(n, size):
     for i in range(size):
         s = "0" + s
     return s
+
+
+if __name__ == "__main__":
+    print("Testing int_to_bin_padding ...")
+    assert "010" == int_to_bin_padding(2, 3)
+    assert "101" == int_to_bin_padding(5, 3)
 
 
 def load_file_decode(path):
@@ -438,7 +500,7 @@ def load_file_decode(path):
 
         for _ in range(taille_table // 3):  # boucle pour récupérer notre table, et en faire un dictionnaire
             taille_cle = int.from_bytes(fichier.read(1), "little")
-            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(taille_cle//8+1), "little"), taille_cle)
+            cle_binaire = int_to_bin_padding(int.from_bytes(fichier.read(taille_cle // 8 + 1), "little"), taille_cle)
             lettre = fichier.read(1).decode("cp437")
 
             table_retour[lettre] = cle_binaire
@@ -448,13 +510,21 @@ def load_file_decode(path):
             data += int_to_bin_padding(int.from_bytes(fichier.read(1), "little"), 8)
     return table_retour, data
 
+def pourcentage_compression(taille_finale,taille_initiale):
+    """
+    prends en paramètre la taille du fichier compressé, et celle du fichier non-compressé, et retourne un float qui contiens le pourcentage de compression entre les deux.
+    taille_finale: taille du fichier compressé
+    taille_initiale: taille du fichier d'origine
+    
+    :return: taux de compression en pourcents
+    """
+    return ((taille_initiale - taille_finale) / taille_initiale) * 100
 
 if __name__ == "__main__":
-    # Fonction main
-
+    print("Testing pourcentage_compression ...")
+    assert pourcentage_compression(20,100) == 80
+    assert pourcentage_compression(50,100) == 50
+    assert pourcentage_compression(1,100) == 99
+if __name__ == "__main__":
+    print("Testing main ...")
     assert main() is None
-
-    # Fonction creer_arbre
-
-    assert creer_arbre({}) is None
-    assert creer_arbre({"a": 3, "b": 3}) == Arbre(Arbre(None, None, "a", 3), Arbre(None, None, "b", 3))

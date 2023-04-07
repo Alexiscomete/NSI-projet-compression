@@ -1,5 +1,6 @@
 .idea
 LoremIpsum_output.txt
+LoremIpsum_output.hcs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
