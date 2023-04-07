@@ -475,11 +475,11 @@ def load_file_decode(path):
             taille chaine compressée (bits)                 (4 octets)
         entrée de table:
             taille clé de table                             (1 octet)
-            clé de table                                    (1 octet)
+            clé de table                                    (taille clé table octet(s))
             caractère ASCII                                 (1 octet)
         chaine compressée:
-            valeur binaire                                  (équivalente à (taille chaine compressée)//8 + 1 bytes)
-            (optionel) padding                              (équivalente à (7-(taille chaine compressée))%8 bytes)
+            valeur binaire                                  (équivalente à (taille chaine compressée) // 8 + 1 octets)
+            (optionel) padding                              (équivalente à (7 - (taille chaine compressée)) % 8 octets)
     paramètres:
     path: chemin d'accès vers le fichier depuis lequel nous souhaitons récupérer nos données compressées
     
