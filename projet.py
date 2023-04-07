@@ -441,7 +441,7 @@ if __name__ == "__main__":
 
 def int_to_bin_padding(n, size):
     """
-    convertis d'un int vers une chaine de caractère binaire, ajoute des 0 à la fin jusqu'à atteindre
+    convertis d'un int vers une chaine de caractère binaire, ajoute des 0 au début jusqu'à atteindre
     la taille binaire demandée
     paramètre:
     n: notre int à convertir
