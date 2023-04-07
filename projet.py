@@ -510,7 +510,21 @@ def load_file_decode(path):
             data += int_to_bin_padding(int.from_bytes(fichier.read(1), "little"), 8)
     return table_retour, data
 
+def pourcentage_compression(taille_finale,taille_initiale):
+    """
+    prends en paramètre la taille du fichier compressé, et celle du fichier non-compressé, et retourne un float qui contiens le pourcentage de compression entre les deux.
+    taille_finale: taille du fichier compressé
+    taille_initiale: taille du fichier d'origine
+    
+    :return: taux de compression en pourcents
+    """
+    return ((taille_initiale - taille_finale) / taille_initiale) * 100
 
+if __name__ == "__main__":
+    print("Testing pourcentage_compression ...")
+    assert pourcentage_compression(20,100) == 80
+    assert pourcentage_compression(50,100) == 50
+    assert pourcentage_compression(1,100) == 99
 if __name__ == "__main__":
     print("Testing main ...")
     assert main() is None
